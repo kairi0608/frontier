@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getAppMode } from "@/lib/config/app-mode";
+import { ConfigurationError } from "@/lib/config/error";
 import { z, ZodError } from "zod";
 import { authorize } from "@/lib/auth/server";
 import { AppError } from "@/lib/errors";
@@ -20,7 +22,7 @@ async function handle(
   context: { params: Promise<{ path: string[] }> },
 ) {
   try {
-    if (process.env.NEXT_PUBLIC_APP_MODE !== "production")
+    if (getAppMode() === "prototype")
       throw new AppError("試用モードでは本番APIを使用しません。", 404);
 
     const { path } = await context.params;
@@ -37,7 +39,6 @@ async function handle(
       throw new AppError("入力内容が大きすぎます。", 413);
 
     let body: unknown;
-
     try {
       body = await request.json();
     } catch {
@@ -116,14 +117,16 @@ async function handle(
     throw new AppError("ページが見つかりません。", 404);
   } catch (error) {
     const status =
-      error instanceof AppError
-        ? error.status
-        : error instanceof ZodError
-          ? 400
-          : 500;
+      error instanceof ConfigurationError
+        ? 503
+        : error instanceof AppError
+          ? error.status
+          : error instanceof ZodError
+            ? 400
+            : 500;
 
     const message =
-      error instanceof AppError
+      error instanceof AppError || error instanceof ConfigurationError
         ? error.message
         : error instanceof ZodError
           ? `入力内容を確認してください。${error.issues[0]?.message || ""}`
