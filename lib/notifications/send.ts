@@ -1,4 +1,5 @@
 import "server-only";
+import { resendConfig } from "@/lib/config/server";
 import { Timestamp } from "firebase-admin/firestore";
 import { Resend } from "resend";
 import { adminServices } from "@/lib/firebase/admin";
@@ -25,11 +26,7 @@ export async function sendNotification(
 ): Promise<NotificationLog> {
   const { db } = adminServices();
   const ref = db.doc(`notificationLogs/${changeLogId}`);
-  const key = process.env.RESEND_API_KEY,
-    from = process.env.RESEND_FROM_EMAIL,
-    appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!key || !from || !appUrl)
-    throw new AppError("メール送信の環境変数が設定されていません。", 503);
+  const { key, from, appUrl } = resendConfig();
   const claim = await db.runTransaction(async (tx) => {
     const [eventDoc, changeDoc, existing] = await Promise.all([
       tx.get(db.doc(`events/${eventId}`)),

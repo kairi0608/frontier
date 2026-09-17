@@ -1,4 +1,5 @@
 import type { Repository } from "../contract";
+import { requireAppMode } from "@/lib/config/app-mode";
 import type {
   Event,
   EventInput,
@@ -114,7 +115,11 @@ export function seed(): Store {
   return { users, events, responses, changes: [], notifications: [] };
 }
 export class MockRepository implements Repository {
+  constructor() {
+    requireAppMode("prototype");
+  }
   private read(): Store {
+    requireAppMode("prototype");
     const stored = localStorage.getItem(key);
     if (stored) return JSON.parse(stored);
     const data = seed();
@@ -122,6 +127,7 @@ export class MockRepository implements Repository {
     return data;
   }
   private write(data: Store) {
+    requireAppMode("prototype");
     localStorage.setItem(key, JSON.stringify(data));
   }
   private actor(data: Store, admin = false) {
@@ -140,6 +146,7 @@ export class MockRepository implements Repository {
     sessionStorage.setItem(sessionKey, user.id);
   }
   async logout() {
+    requireAppMode("prototype");
     sessionStorage.removeItem(sessionKey);
   }
   async snapshot(): Promise<Snapshot> {

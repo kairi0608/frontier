@@ -1,53 +1,30 @@
-# 検証記録
+# 検証記録 — 本番モード設定の厳格化
 
-実施日：2026-09-17。Node.js 22.20.0 / Next.js 16.3.5 / Windows。
+2026-09-17 / Node.js 22.20.0 / Next.js 16.3.5 / Windows。
 
-## 自動検証
+既存アプリを変更し、未設定・不正APP_MODEからPrototypeへ自動移行する処理を廃止しました。変更ファイル一覧・理由・環境変数は [PRODUCTION-HARDENING.md](PRODUCTION-HARDENING.md) を参照してください。
 
-| コマンド | 検証内容 | 結果 |
-| --- | --- | --- |
-| `npm ci` | lockfileに固定した依存のインストール | 成功 |
-| `npm run lint` | ESLint / React / TypeScript規則 | 成功・警告なし |
-| `npm run typecheck` | TypeScript厳密型チェック | 成功 |
-| `npm test` | 差分・日本時間・宛先・メール・共通Repository | 14件成功 |
-| `npm run test:rules` | Firestore EmulatorでRulesと本番APIを検証 | 16件成功 |
-| `npm run build` | Next.js本番最適化ビルド | 成功 |
-| `npm run test:e2e` | Chromiumでスマートフォン幅とPC幅の一連操作 | 2件成功 |
+| コマンド・確認                   | 結果                                           |
+| -------------------------------- | ---------------------------------------------- |
+| npm run lint                     | 成功、警告なし                                 |
+| npm run typecheck                | 成功                                           |
+| npm test                         | 45件成功                                       |
+| npm run test:rules               | 16件成功                                       |
+| npm run test:e2e                 | prototypeビルドと2件の操作テスト成功           |
+| npm run test:e2e:production      | productionでnpm run buildと2件の操作テスト成功 |
+| APP_MODE未設定・不正値           | 実際のビルドが設定エラーで終了                 |
+| productionのFirebase公開設定不足 | 実際のビルドが不足変数名を示して終了           |
 
-依存関係はpackage.json・package-lock.jsonで固定しています。テストは本番プロジェクトへの書き込みや実メール配信を行っていません。
+本番の必須Firebase公開4項目と、Admin/Resendの秘密設定の不足をテストしています。productionログインにはメール・パスワードだけを表示し、試用ボタン・バッジ・試用通知文言を表示しません。試用データがブラウザーに残っていても、それを利用して本番へログインできないことを実ブラウザーで確認しました。
 
-## 依頼の32項目との対応
+既存のイベント作成・公開・参加回答・回答変更・1人1回答・変更差分・Transaction・version競合・参加者限定通知・部分失敗の記録・再送・権限制御・論理削除を回帰検証しました。スマートフォン相当390px幅とPC1280px幅で確認しています。
 
-| 番号 | 項目 | 検証方法 |
-| --- | --- | --- |
-| 1 | 未ログインの内部画面拒否 | E2Eで/authへの遷移、APIで401、Rulesで拒否 |
-| 2–3 | 公開イベントのみ閲覧 | E2E・本番API/Rulesエミュレーター |
-| 4–6 | 参加登録・未定への変更・1回答 | E2E・本番APIでcanonical IDをupsert |
-| 7 | 他人の回答の変更拒否 | Rulesエミュレーター・APIでuserId注入を拒否 |
-| 8 | 一般ユーザーの管理APIが403 | 本番API統合テスト |
-| 9–10 | 管理者の作成・編集 | E2E・本番API統合テスト |
-| 11–12 | 変更なし除外・12:30→12:00 | 単体・本番API・メール・E2E |
-| 13–15 | ChangeLog・version加算・競合拒否 | 実Firestore Transactionで検証、同時保存も検証 |
-| 16 | 保存のみでは送信しない | 本番APIでResend未呼出を検証 |
-| 17 | 保存通知の確認画面 | E2Eで差分・対象人数を確認 |
-| 18–22 | attendingのみ・無効ユーザー除外 | 単体と本番APIでmaybe/declined/未回答/無効を含むデータを検証 |
-| 23–24 | メールの前後値と詳細URL | 本番送信経路のHTML/textを捕捉して検証 |
-| 25–26 | 通知ログとfailed結果 | 実Firestore Emulatorへ保存されたドキュメントを検証 |
-| 27 | 重複メール防止 | 同じ通知要求を再実行し、送信呼出回数が増えないことを検証 |
-| 28 | 論理削除後の非表示 | 本番APIでイベントが残り一覧から消えることを検証 |
-| 29 | スマートフォン表示 | 390px幅（iPhone 13相当）と1280px幅。主要10ページの横はみ出し検査と画像確認 |
-| 30–32 | lint・TypeScript・build | 上表のコマンド実行 |
+単体/UI/APIモードテスト45件、Firestore統合16件、ブラウザー4件の合計65件。これとは別にビルド拒否を3条件で確認しました。
 
-追加検証：ユーザー追加でパスワードをFirestoreへ保存しないこと、無効化時のトークン失効処理、自己降格の拒否、2人の管理者が同時に相互降格しようとしても有効な管理者が1人残ること、部分送信失敗後に成功者へ再送しないこと、HTMLエスケープ、日付変更時の表示、通知対象0名。
+## 外部環境の確認範囲
 
-## 本番接続後に必要な受入確認
-
-次の項目は認証情報・外部環境が未提供のため未実施です。
-
-- 実Firebase Authenticationでのログイン。統合テストではトークン検証の外部サービス応答のみを差し替え、APIのusers/role/isActive判定は実処理を検証しています。
-- 実Resendによるメール送信と受信。テストではResend API応答を差し替え、送信対象・本文・個別結果保存・再送制御を検証しています。
-- 本番FirebaseへのRules/インデックス反映。
-- GitHubへのpush。保存先URLと書き込み可能な認証が未確定です。
-- Vercelへの本番デプロイ。
-
-本番受入の手順はREADMEに記載しています。コード検証が成功したことと、実サービスで配信を確認したことは区別してください。
+- Firestore統合検証は本物のAdmin SDKとローカルFirestore Emulatorを使用しています。
+- Firebase ID Tokenの外部検証応答とResendの配信応答はテスト用に差し替えています。
+- 本番UI用ビルドの公開Firebase設定は架空値です。この成果物をそのまま配備せず、実環境変数で再ビルドしてください。
+- 実Firebaseログイン・実メール受信・本番Rules反映・Vercel公開は未実施です。
+- ローカルリポジトリにはGitHub remoteが未設定のため、GitHubへのpushは実施していません。

@@ -1,6 +1,8 @@
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { clientAuth } from "@/lib/firebase/client";
 import { AppError } from "@/lib/errors";
+import { firebasePublicConfig } from "@/lib/config/firebase-public";
+import { ConfigurationError } from "@/lib/config/error";
 import type {
   EventInput,
   NotificationLog,
@@ -11,10 +13,14 @@ import type {
 } from "@/types/domain";
 import type { Repository } from "../contract";
 export class FirestoreRepository implements Repository {
+  constructor() {
+    firebasePublicConfig();
+  }
   async login(email: string, password: string) {
     try {
       await signInWithEmailAndPassword(clientAuth(), email, password);
-    } catch {
+    } catch (error) {
+      if (error instanceof ConfigurationError) throw error;
       throw new AppError(
         "ログインできませんでした。メールアドレスとパスワードを確認してください。",
       );

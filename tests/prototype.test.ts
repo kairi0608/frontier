@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MockRepository } from "@/lib/repositories/prototype";
 import { conflictMessage } from "@/lib/errors";
 import type { Event, EventInput } from "@/types/domain";
@@ -32,6 +32,7 @@ const inputOf = (e: Event): EventInput => ({
 describe("shared prototype workflow", () => {
   let repo: MockRepository;
   beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_APP_MODE", "prototype");
     Object.defineProperty(globalThis, "localStorage", {
       value: new StorageMock(),
       configurable: true,
@@ -42,6 +43,7 @@ describe("shared prototype workflow", () => {
     });
     repo = new MockRepository();
   });
+  afterEach(() => vi.unstubAllEnvs());
   it("rejects anonymous users", async () => {
     await expect(repo.snapshot()).rejects.toMatchObject({ status: 401 });
   });
