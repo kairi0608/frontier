@@ -1290,7 +1290,40 @@ summary {
   padding: 15px;
 }
 .auth-box form {
-  margin-top: 30px;
+  margin-top: 22px;
+}
+.auth-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 26px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f0f2ec;
+}
+.auth-mode-tabs button {
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: transparent;
+  color: #667064;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.auth-mode-tabs button.active {
+  background: #fff;
+  color: #254f3e;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(37, 79, 62, 0.1);
+}
+.auth-message {
+  margin-top: 18px;
+}
+.auth-approval-note {
+  margin: 14px 0 0;
+  line-height: 1.7;
 }
 .auth-help {
   text-align: center;
