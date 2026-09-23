@@ -20,11 +20,12 @@ export function firebaseAdminConfig() {
 }
 export function resendConfig() {
   requireAppMode("production");
-  const key = requiredSetting("RESEND_API_KEY", process.env.RESEND_API_KEY);
-  const from = requiredSetting(
-    "RESEND_FROM_EMAIL",
-    process.env.RESEND_FROM_EMAIL,
-  );
+  const key = process.env.RESEND_API_KEY?.trim();
+  const from = process.env.RESEND_FROM_EMAIL?.trim();
+  if (!key || !from)
+    throw new ConfigurationError(
+      "メール送信設定が完了していません。管理者がRESEND_API_KEYとRESEND_FROM_EMAILを設定してください。",
+    );
   const appUrl = requiredSetting(
     "NEXT_PUBLIC_APP_URL",
     process.env.NEXT_PUBLIC_APP_URL,

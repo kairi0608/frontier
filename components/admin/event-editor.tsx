@@ -17,6 +17,7 @@ import { eventSchema } from "@/lib/events/validators";
 import { diffEvents, hasNotifiableChanges } from "@/lib/events/diff";
 import { fromJstInput, toJstInput } from "@/lib/events/format";
 import { errorMessage } from "@/lib/errors";
+import { isPrototype } from "@/lib/config/app-mode";
 import type { Event, EventInput } from "@/types/domain";
 const empty: EventInput = {
   title: "",
@@ -368,7 +369,7 @@ export function EventEditor({ event }: { event?: Event }) {
           <p className="muted small">
             無効ユーザーは除外済みです。送信対象はサーバーで再計算されるため、回答変更により人数が変わる場合があります。
           </p>
-          {process.env.NEXT_PUBLIC_APP_MODE !== "production" && (
+          {isPrototype() && (
             <p className="notice">
               試用モードのため、実際のメールは送信されません。
             </p>

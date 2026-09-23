@@ -24,6 +24,7 @@ import { AppError, errorMessage } from "@/lib/errors";
 import type { Snapshot } from "@/types/domain";
 import { MemberPages } from "@/components/events/member-pages";
 import { AdminPages } from "@/components/admin/admin-pages";
+import { isPrototype } from "@/lib/config/app-mode";
 type Context = {
   data: Snapshot;
   refresh: () => Promise<void>;
@@ -184,7 +185,7 @@ export function Workspace({ path }: { path: string[] }) {
                 : "フロンティアの活動を、もっと身近に。"}
             </span>
             <div>
-              {process.env.NEXT_PUBLIC_APP_MODE !== "production" && (
+              {isPrototype() && (
                 <span className="badge prototype">試用モード</span>
               )}
               <button

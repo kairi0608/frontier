@@ -4,13 +4,14 @@ import { useRouter } from "next/navigation";
 import { ArrowUpRight, ArrowRight, Compass, LockKeyhole } from "lucide-react";
 import { repository } from "@/lib/repositories";
 import { errorMessage } from "@/lib/errors";
+import { isPrototype } from "@/lib/config/app-mode";
 export default function Auth() {
   const router = useRouter();
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
-  const prototype = process.env.NEXT_PUBLIC_APP_MODE !== "production";
+  const prototype = isPrototype();
   async function login(address = email) {
     setBusy(true);
     setError("");

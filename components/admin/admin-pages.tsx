@@ -22,6 +22,7 @@ import { PageTitle } from "@/components/events/member-pages";
 import { EventEditor } from "./event-editor";
 import { UserManager } from "./user-manager";
 import { repository } from "@/lib/repositories";
+import { isPrototype } from "@/lib/config/app-mode";
 import {
   changeValues,
   fieldLabels,
@@ -163,7 +164,7 @@ export function notificationMessage(result: NotificationLog) {
   return result.status === "completed"
     ? result.recipientCount === 0
       ? "通知対象は0名でした。通知履歴を保存しました。"
-      : `${result.recipientCount}名への${result.simulated ? "試用通知" : "通知"}が完了しました。`
+      : `${result.recipientCount}名への${result.simulated && isPrototype() ? "試用通知" : "通知"}が完了しました。`
     : result.status === "processing"
       ? "通知処理を保存しました。履歴から続きを実行できます。"
       : "一部または全員への送信に失敗しました。通知履歴で結果を確認し、再送できます。";
@@ -589,7 +590,7 @@ function EventHistory({ event }: { event: Event }) {
                   ? `通知：${labels[n.status]} · ${n.recipientCount}名`
                   : "未通知"}
               </b>
-              {n?.simulated && (
+              {n?.simulated && isPrototype() && (
                 <span className="badge prototype">試用・実送信なし</span>
               )}
               {(!n || n.status !== "completed") &&
