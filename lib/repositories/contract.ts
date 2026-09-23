@@ -8,6 +8,7 @@ import type {
 } from "@/types/domain";
 export interface Repository {
   login(email: string, password: string): Promise<void>;
+  register(name: string, email: string, password: string): Promise<void>;
   logout(): Promise<void>;
   snapshot(): Promise<Snapshot>;
   respond(eventId: string, status: ResponseStatus): Promise<void>;

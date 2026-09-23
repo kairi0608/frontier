@@ -36,4 +36,10 @@ export const userSchema = z
     password: z.string().min(12).max(128).optional(),
   })
   .strict();
+
+export const registrationSchema = z
+  .object({
+    name: z.string().trim().min(1, "名前を入力してください。").max(100),
+  })
+  .strict();
 export const idSchema = z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/);

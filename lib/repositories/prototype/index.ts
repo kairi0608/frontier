@@ -145,6 +145,12 @@ export class MockRepository implements Repository {
     if (!user) throw new AppError("試用アカウントを選択してください。");
     sessionStorage.setItem(sessionKey, user.id);
   }
+  async register(name: string, email: string, password: string) {
+    void name;
+    void email;
+    void password;
+    throw new AppError("試用モードでは新規登録を使用できません。");
+  }
   async logout() {
     requireAppMode("prototype");
     sessionStorage.removeItem(sessionKey);

@@ -205,6 +205,28 @@ export async function respond(user: User, id: string, status: ResponseStatus) {
     });
   });
 }
+export async function registerSelf(uid: string, email: string, name: string) {
+  const { db } = adminServices();
+  const ref = db.doc(`users/${uid}`);
+  const now = Timestamp.now();
+  await db.runTransaction(async (tx) => {
+    const current = await tx.get(ref);
+    if (current.exists) {
+      if (current.data()?.email !== email)
+        throw new AppError("登録済みアカウントの情報が一致しません。", 409);
+      return;
+    }
+    tx.create(ref, {
+      name: name.trim(),
+      email,
+      role: "member",
+      isActive: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+  });
+}
+
 export async function saveUser(actor: User, input: UserInput, id?: string) {
   const { db, auth } = adminServices();
   if (id === actor.id && (input.role !== "admin" || !input.isActive))

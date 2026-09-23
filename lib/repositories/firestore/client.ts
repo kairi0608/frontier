@@ -1,4 +1,10 @@
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  deleteUser,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+} from "firebase/auth";
 import { clientAuth } from "@/lib/firebase/client";
 import { AppError } from "@/lib/errors";
 import { firebasePublicConfig } from "@/lib/config/firebase-public";
@@ -26,6 +32,56 @@ export class FirestoreRepository implements Repository {
       );
     }
   }
+  async register(name: string, email: string, password: string) {
+    const auth = clientAuth();
+    let user = null;
+    let profileCreated = false;
+    try {
+      const credential = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password,
+      );
+      user = credential.user;
+      await updateProfile(user, { displayName: name.trim() });
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${await user.getIdToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: name.trim() }),
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok)
+        throw new AppError(data.error || "登録に失敗しました。", res.status);
+      profileCreated = true;
+      await signOut(auth);
+    } catch (error) {
+      if (!profileCreated && user && auth.currentUser?.uid === user.uid) {
+        try {
+          await deleteUser(user);
+        } catch {
+          // Server profile creation may already have completed. Avoid masking the original error.
+        }
+      }
+      if (error instanceof AppError || error instanceof ConfigurationError)
+        throw error;
+      const code =
+        typeof error === "object" && error && "code" in error
+          ? String((error as { code?: unknown }).code)
+          : "";
+      if (code === "auth/email-already-in-use")
+        throw new AppError("このメールアドレスはすでに登録されています。");
+      if (code === "auth/weak-password")
+        throw new AppError("より強いパスワードを設定してください。");
+      if (code === "auth/invalid-email")
+        throw new AppError("メールアドレスの形式を確認してください。");
+      throw new AppError("アカウント登録に失敗しました。もう一度お試しください。");
+    }
+  }
+
   async logout() {
     await signOut(clientAuth());
   }

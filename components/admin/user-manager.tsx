@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Plus, Pencil } from "lucide-react";
+import { Check, Plus, Pencil } from "lucide-react";
 import { useApp } from "@/components/layout/workspace";
 import { PageTitle } from "@/components/events/member-pages";
 import { Modal } from "./admin-pages";
@@ -34,7 +34,7 @@ export function UserManager() {
       <PageTitle
         eyebrow="MEMBER MANAGEMENT"
         title="ユーザー管理"
-        description="フロンティアのメンバーと利用権限を管理します。"
+        description="フロンティアのメンバー、自己登録の承認、利用権限を管理します。"
         action={
           <button className="btn primary" onClick={() => open("new")}>
             <Plus size={18} />
@@ -56,11 +56,35 @@ export function UserManager() {
               <span
                 className={`badge ${u.isActive ? "attending" : "declined"}`}
               >
-                {u.isActive ? "有効" : "無効"}
+                {u.isActive ? "有効" : "承認待ち / 無効"}
               </span>
               <span className="small">
                 {u.role === "admin" ? "管理者" : "メンバー"}
               </span>
+              {!u.isActive && (
+                <button
+                  className="btn primary"
+                  disabled={busy}
+                  onClick={() =>
+                    void run(
+                      async () =>
+                        (await repository()).saveUser(
+                          {
+                            name: u.name,
+                            email: u.email,
+                            role: u.role,
+                            isActive: true,
+                          },
+                          u.id,
+                        ),
+                      "ユーザーを承認しました。",
+                    )
+                  }
+                >
+                  <Check size={15} />
+                  承認する
+                </button>
+              )}
               <button className="btn secondary" onClick={() => open(u)}>
                 <Pencil size={15} />
                 編集

@@ -68,7 +68,9 @@ beforeAll(() => {
   mocks.services.auth = {
     verifyIdToken: vi.fn(async (token: string) => {
       if (["admin", "member", "member2", "inactive"].includes(token))
-        return { uid: token };
+        return { uid: token, email: `${token}@frontier.example` };
+      if (token === "self-register")
+        return { uid: "self-user", email: "self@frontier.example" };
       throw new Error("invalid");
     }),
     updateUser: vi.fn(async () => ({})),
@@ -117,6 +119,24 @@ beforeEach(async () => {
   }));
 });
 describe("production API with real Firestore transactions", () => {
+  it("self-registers only as an inactive member pending administrator approval", async () => {
+    const response = await call("auth/register", "POST", "self-register", {
+      name: "自己登録ユーザー",
+      role: "admin",
+      isActive: true,
+    });
+    expect(response.status).toBe(400);
+
+    const accepted = await call("auth/register", "POST", "self-register", {
+      name: "自己登録ユーザー",
+    });
+    expect(accepted.status).toBe(201);
+    const saved = (await mocks.services.db.doc("users/self-user").get()).data()!;
+    expect(saved.email).toBe("self@frontier.example");
+    expect(saved.role).toBe("member");
+    expect(saved.isActive).toBe(false);
+    expect((await call("data", "GET", "self-register")).status).toBe(403);
+  });
   it("creates and disables a member through the administrator API", async () => {
     const member = {
       name: "追加ユーザー",
