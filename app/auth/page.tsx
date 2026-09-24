@@ -7,7 +7,9 @@ import { errorMessage } from "@/lib/errors";
 import { isPrototype } from "@/lib/config/app-mode";
 export default function Auth() {
   const router = useRouter();
-  const [email, setEmail] = useState(""),
+  const [registering, setRegistering] = useState(false),
+    [name, setName] = useState(""),
+    [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -18,6 +20,20 @@ export default function Auth() {
     try {
       const repo = await repository();
       await repo.login(address, password);
+      await repo.snapshot();
+      router.replace("/home");
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function register() {
+    setBusy(true);
+    setError("");
+    try {
+      const repo = await repository();
+      await repo.register(name, email, password);
       await repo.snapshot();
       router.replace("/home");
     } catch (e) {
@@ -54,9 +70,19 @@ export default function Auth() {
           <span className="icon-box">
             <LockKeyhole />
           </span>
-          <p className="eyebrow">WELCOME BACK</p>
-          <h2>おかえりなさい。</h2>
-          <p className="muted">メンバーアカウントでログインしてください。</p>
+          <p className="eyebrow">
+            {registering && !prototype ? "CREATE ACCOUNT" : "WELCOME BACK"}
+          </p>
+          <h2>
+            {registering && !prototype
+              ? "アカウントを作成"
+              : "おかえりなさい。"}
+          </h2>
+          <p className="muted">
+            {registering && !prototype
+              ? "登録後すぐにイベントへ参加できます。"
+              : "メンバーアカウントでログインしてください。"}
+          </p>
           {prototype ? (
             <div className="prototype-login">
               <p className="notice">
@@ -84,9 +110,21 @@ export default function Auth() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                void login();
+                void (registering ? register() : login());
               }}
             >
+              {registering && (
+                <label>
+                  名前
+                  <input
+                    autoComplete="name"
+                    value={name}
+                    maxLength={100}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </label>
+              )}
               <label>
                 メールアドレス
                 <input
@@ -100,16 +138,34 @@ export default function Auth() {
               <label>
                 パスワード
                 <input
-                  autoComplete="current-password"
+                  autoComplete={registering ? "new-password" : "current-password"}
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  minLength={registering ? 6 : undefined}
                 />
               </label>
               <button className="btn primary full" disabled={busy}>
-                {busy ? "ログイン中…" : "ログイン"}
+                {busy
+                  ? registering
+                    ? "作成中…"
+                    : "ログイン中…"
+                  : registering
+                    ? "アカウントを作成"
+                    : "ログイン"}
                 <ArrowRight size={18} />
+              </button>
+              <button
+                type="button"
+                className="btn secondary full"
+                disabled={busy}
+                onClick={() => {
+                  setRegistering(!registering);
+                  setError("");
+                }}
+              >
+                {registering ? "ログイン画面へ戻る" : "新しいアカウントを作成"}
               </button>
             </form>
           )}
@@ -118,11 +174,13 @@ export default function Auth() {
               {error}
             </p>
           )}
-          <p className="auth-help">
-            アカウント・パスワードについては
-            <br />
-            フロンティアの管理者にお問い合わせください。
-          </p>
+          {!prototype && !registering && (
+            <p className="auth-help">
+              パスワードを忘れた場合は
+              <br />
+              フロンティアの管理者にお問い合わせください。
+            </p>
+          )}
         </div>
       </section>
     </main>

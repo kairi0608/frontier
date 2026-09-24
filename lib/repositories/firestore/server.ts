@@ -220,7 +220,7 @@ export async function registerSelf(uid: string, email: string, name: string) {
       name: name.trim(),
       email,
       role: "member",
-      isActive: false,
+      isActive: true,
       createdAt: now,
       updatedAt: now,
     });

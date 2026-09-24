@@ -63,10 +63,7 @@ async function handle(
 
       await registerSelf(identity.uid, identity.email, parsed.name);
 
-      return NextResponse.json(
-        { ok: true, status: "pending" },
-        { status: 201 },
-      );
+      return NextResponse.json({ ok: true, status: "active" });
     }
 
     const user = await authorize(request, scope === "admin");

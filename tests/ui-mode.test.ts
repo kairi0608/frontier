@@ -46,6 +46,7 @@ describe("real UI components respect the explicit mode", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_MODE", "production");
     const text = await render(createElement(Auth));
     expect(text).toContain("メールアドレス");
+    expect(text).toContain("新しいアカウントを作成");
     expect(container.querySelector('input[type="password"]')).not.toBeNull();
     expect(text).not.toMatch(forbidden);
   });

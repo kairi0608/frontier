@@ -53,11 +53,10 @@ export class FirestoreRepository implements Repository {
         body: JSON.stringify({ name: name.trim() }),
         cache: "no-store",
       });
-      const data = await res.json();
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok)
         throw new AppError(data.error || "登録に失敗しました。", res.status);
       profileCreated = true;
-      await signOut(auth);
     } catch (error) {
       if (!profileCreated && user && auth.currentUser?.uid === user.uid) {
         try {

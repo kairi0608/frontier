@@ -119,7 +119,7 @@ beforeEach(async () => {
   }));
 });
 describe("production API with real Firestore transactions", () => {
-  it("self-registers only as an inactive member pending administrator approval", async () => {
+  it("self-registers as an active member without administrator approval", async () => {
     const response = await call("auth/register", "POST", "self-register", {
       name: "自己登録ユーザー",
       role: "admin",
@@ -130,12 +130,12 @@ describe("production API with real Firestore transactions", () => {
     const accepted = await call("auth/register", "POST", "self-register", {
       name: "自己登録ユーザー",
     });
-    expect(accepted.status).toBe(201);
+    expect(accepted.status).toBe(200);
     const saved = (await mocks.services.db.doc("users/self-user").get()).data()!;
     expect(saved.email).toBe("self@frontier.example");
     expect(saved.role).toBe("member");
-    expect(saved.isActive).toBe(false);
-    expect((await call("data", "GET", "self-register")).status).toBe(403);
+    expect(saved.isActive).toBe(true);
+    expect((await call("data", "GET", "self-register")).status).toBe(200);
   });
   it("creates and disables a member through the administrator API", async () => {
     const member = {
